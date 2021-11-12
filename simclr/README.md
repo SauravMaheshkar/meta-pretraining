@@ -2,11 +2,19 @@
 This folder contains code to run the meta-parameterized SimCLR experiments in the paper.
 
 
-## Getting started
-Download the dataset following the instructions [here](https://www.physionet.org/content/ptb-xl/1.0.1/). Once you have downloaded the dataset, make sure the `path` variable in `simclr_datasets.py` to be that path to the data.
+## Setting up the environment
 
-Install the core libraries: `pip install torch higher wfdb pandas numpy`
+1. Create and activate a python virtual environment
+```python3
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+```
 
+2. Download the dataset using the provided bash file
+```bash
+./download_dataset.sh
+```
 
 ## Pre-training
 
