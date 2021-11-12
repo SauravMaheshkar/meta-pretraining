@@ -1,0 +1,12 @@
+# Dataset
+physionet.org
+
+# Training Logs
+simclr-500ex
+
+# Cache
+__pycache__/
+.mypy_cache
+
+# Environments
+venv/
