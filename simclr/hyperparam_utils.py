@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import grad
 
-from engine.utils import get_loss_simclr  # type: ignore
+from engine.utils import get_loss_simclr
 
 __all__ = [
     "zero_hypergrad",

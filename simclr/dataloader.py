@@ -2,11 +2,11 @@ import ast
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
-import pandas as pd  # type: ignore
+import pandas as pd
 import torch
-import wfdb  # type: ignore
+import wfdb
 
-from utils import set_seed  # type: ignore
+from utils import set_seed
 
 RawData = Union[List, np.ndarray]
 

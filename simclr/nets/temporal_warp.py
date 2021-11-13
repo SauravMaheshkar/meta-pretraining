@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from scipy.ndimage import gaussian_filter1d  # type:ignore
+from scipy.ndimage import gaussian_filter1d
 
 __all__ = ["RandWarpAugLearnExMag"]
 

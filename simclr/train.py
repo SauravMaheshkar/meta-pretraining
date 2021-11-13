@@ -1,24 +1,23 @@
 import argparse
 import os
-from typing import Any, Callable, Dict, List, Literal
+from typing import Any, Callable, Dict, List
 
-import higher  # type: ignore
+import higher
 import torch
 import torch.nn as nn
-from numpy import number  # type: ignore
-from tqdm import tqdm  # type: ignore
+from numpy import number
+from tqdm import tqdm
 
-from dataloader import ECGDataSetWrapper  # type: ignore
-from engine.helpers import update_lossdict  # type: ignore
-from engine.helpers import do_ft_head, do_pretrain, eval_student, inner_loop_finetune
-from engine.utils import get_save_path, model_saver  # type: ignore
-from hyperparam_utils import hyper_step  # type: ignore
+from dataloader import ECGDataSetWrapper
+from engine.helpers import do_ft_head, do_pretrain, eval_student, inner_loop_finetune, update_lossdict
+from engine.utils import get_save_path, model_saver
+from hyperparam_utils import hyper_step
 from hyperparam_utils import gather_flat_grad, zero_hypergrad
-from loss import NTXentLoss  # type: ignore
-from nets.resnet import ecg_simclr_resnet18  # type: ignore
-from nets.temporal_warp import RandWarpAugLearnExMag  # type: ignore
-from nets.wrappers import MultiTaskHead  # type: ignore
-from utils import set_seed  # type: ignore
+from loss import NTXentLoss
+from nets.resnet import ecg_simclr_resnet18
+from nets.temporal_warp import RandWarpAugLearnExMag
+from nets.wrappers import MultiTaskHead
+from utils import set_seed
 
 parser = argparse.ArgumentParser(description="ECG SIMCLR IFT")
 

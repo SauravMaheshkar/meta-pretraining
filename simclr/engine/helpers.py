@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.metrics import roc_auc_score  # type: ignore
+from sklearn.metrics import roc_auc_score
 
 from .utils import get_loss, get_loss_simclr
 
