@@ -9,10 +9,10 @@ from numpy import number
 from tqdm import tqdm
 
 from dataloader import ECGDataSetWrapper
-from engine.helpers import do_ft_head, do_pretrain, eval_student, inner_loop_finetune, update_lossdict
+from engine.helpers import (do_ft_head, do_pretrain, eval_student,
+                            inner_loop_finetune, update_lossdict)
 from engine.utils import get_save_path, model_saver
-from hyperparam_utils import hyper_step
-from hyperparam_utils import gather_flat_grad, zero_hypergrad
+from hyperparam_utils import gather_flat_grad, hyper_step, zero_hypergrad
 from loss import NTXentLoss
 from nets.resnet import ecg_simclr_resnet18
 from nets.temporal_warp import RandWarpAugLearnExMag
