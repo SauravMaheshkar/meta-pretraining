@@ -1,11 +1,11 @@
-from typing import Iterable, Tuple
+from typing import Callable, Iterable, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import grad
 
-from .train_utils import get_loss_simclr  # type: ignore
+from engine.utils import get_loss_simclr  # type: ignore
 
 __all__ = [
     "zero_hypergrad",
@@ -93,6 +93,7 @@ def hyper_step(
     teacher: nn.Module,
     hyper_params: Iterable,
     pretrain_loader: Iterable,
+    criterion: Callable,
     optimizer: torch.optim.Optimizer,
     d_val_loss_d_theta: torch.Tensor,
     elementary_lr: float,
@@ -125,7 +126,7 @@ def hyper_step(
             xjs = teacher(xjs)
 
         # Calculate Training Loss
-        train_loss: torch.Tensor = get_loss_simclr(model, xis, xjs)
+        train_loss: torch.Tensor = get_loss_simclr(model, criterion, xis, xjs)
         train_loss = (
             train_loss + train_loss * head(model.logits(xis)).sum() * 0  # type: ignore
         )

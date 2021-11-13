@@ -131,25 +131,6 @@ class ResizeTransformTime(nn.Module):
         self.sf = sf
         self.mode: str = "linear"
 
-    @property
-    def mode(self) -> str:
-        """Type of algorithm used for Interpolation"""
-        return self.mode
-
-    @mode.setter
-    def mode(self, algorithm: str) -> None:
-        """Changes the algorithm used for Interpolation"""
-        assert algorithm in [
-            "nearest",
-            "linear",
-            "bilinear",
-            "bicubic",
-            "trilinear",
-            "area",
-        ], "Only nearest,linear,bilinear,bicubic,trilinear and area is allowed"
-
-        self.mode = algorithm
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         factor: float = self.sf
         if factor < 1:

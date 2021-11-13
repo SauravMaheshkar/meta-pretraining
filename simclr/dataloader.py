@@ -6,7 +6,7 @@ import pandas as pd  # type: ignore
 import torch
 import wfdb  # type: ignore
 
-from .utils import set_seed  # type: ignore
+from utils import set_seed  # type: ignore
 
 RawData = Union[List, np.ndarray]
 

@@ -48,7 +48,6 @@ class NTXentLoss(torch.nn.Module):
         self.similarity_function: Callable = self._get_similarity_function()
         self.criterion: Callable = torch.nn.CrossEntropyLoss(reduction="sum")
 
-    @property
     def _get_similarity_function(self) -> Callable:
         if self.use_cosine_similarity:
             self._cosine_similarity = torch.nn.CosineSimilarity(dim=-1)
