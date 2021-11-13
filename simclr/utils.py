@@ -10,6 +10,7 @@ __all__ = ["set_seed"]
 
 
 def set_seed(seed: int = 42) -> None:
+    """Sets Random Seed for all libraries"""
     np.random.seed(seed)
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
