@@ -8,10 +8,11 @@ import torch.nn as nn
 from numpy import number
 from tqdm import tqdm
 
+import wandb
 from dataloader import ECGDataSetWrapper
 from engine.helpers import (do_ft_head, do_pretrain, eval_student,
                             inner_loop_finetune, update_lossdict)
-from engine.utils import get_save_path, model_saver
+from engine.utils import model_saver
 from hyperparam_utils import gather_flat_grad, hyper_step, zero_hypergrad
 from loss import NTXentLoss
 from nets.resnet import ecg_simclr_resnet18
@@ -37,7 +38,7 @@ parser.add_argument("--teacherarch")
 parser.add_argument("--dataset", type=str, default="ecg")
 parser.add_argument("--neumann", type=int, default=1)
 parser.add_argument("--batch_size", type=int, default=256)
-parser.add_argument("--savefol", type=str, default="simclr")
+parser.add_argument("--savefol", type=str, default="checkpoints")
 parser.add_argument("--save", action="store_false")
 parser.add_argument("--no_probs", action="store_true")
 parser.add_argument("--temperature", type=float, default=0.5)
@@ -46,15 +47,12 @@ parser.add_argument("--teach_checkpoint", type=str)
 
 args = parser.parse_args()
 
+os.makedirs(args.savefol, exist_ok=True)
+
 set_seed(args.seed)
 
 # File Sharing Strategy for MultiProcessing
 torch.multiprocessing.set_sharing_strategy("file_system")
-
-if args.no_probs:
-    args.savefol += "determ"
-
-args.savefol += f"-{args.ex}ex"
 
 os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -92,7 +90,7 @@ def train(args):
 
     # Create Save Path
     if args.save:
-        save_path: str = get_save_path(args)
+        save_path: str = args.savefol
 
     if args.teacherarch == "warpexmag":
 
@@ -205,6 +203,9 @@ def train(args):
                     device,
                 )
 
+                # Sync Metrics to Weights and Biases 🔥
+                wandb.log({"PreTraining Loss": pt_loss})
+
                 # Update the PreTraining Meter
                 pt_meter.update(pt_loss)
 
@@ -216,13 +217,19 @@ def train(args):
                 else:
                     ft_train_loss, ft_train_acc = 0, 0
 
+                # Sync Metrics to Weights and Biases 🔥
+                wandb.log(
+                    {
+                        "FineTuning Training Loss": ft_train_loss,
+                    }
+                )
+
                 # Update FineTuning Meter
                 ft_loss_meter.update(ft_train_loss)
                 ft_acc_meter.update(ft_train_acc)
                 ft_val_loss, ft_val_acc, hypg = 0, 0, 0
 
             else:
-
                 # Get PreTraining loss
                 pt_loss = do_pretrain(
                     student,
@@ -234,8 +241,12 @@ def train(args):
                     device,
                 )
 
+                # Sync Metrics to Weights and Biases 🔥
+                wandb.log({"PreTraining Loss": pt_loss})
+
                 # Update PreTraining Meter
                 pt_meter.update(pt_loss)
+
                 if steps % args.pretrain_steps == 0:
                     with higher.innerloop_ctx(
                         head, finetune_optim, copy_initial_weights=True
@@ -261,6 +272,13 @@ def train(args):
                     ft_loss_meter.update(ft_train_loss)
                     ft_acc_meter.update(ft_train_acc)
 
+                    # Sync Metrics to Weights and Biases 🔥
+                    wandb.log(
+                        {
+                            "FineTuning Training Loss": ft_train_loss,
+                        }
+                    )
+
                     # Get FineTuning Gradient
                     ft_grad: torch.Tensor = gather_flat_grad(ft_grad)
                     for param_group in pretrain_optim.param_groups:
@@ -283,11 +301,19 @@ def train(args):
                     )
                     hypg = hypg.norm().item()
                     hyp_optim.step()
+
                 else:
 
                     # Pass through the FineTuning Head
                     ft_train_loss, ft_train_acc = do_ft_head(
                         student, head, finetune_optim, train_dl, device
+                    )
+
+                    # Sync Metrics to Weights and Biases 🔥
+                    wandb.log(
+                        {
+                            "FineTuning Training Loss": ft_train_loss,
+                        }
                     )
 
                     # Update FineTuning Metrics
@@ -311,13 +337,13 @@ def train(args):
 
         # Evaluate Student
         if teacher is not None:
-            ft_test_ld = eval_student(student, head, test_dl, device)
+            ft_test_ld = eval_student(student, head, test_dl, device, split="Test")
             stud_finetune_test_ld = update_lossdict(stud_finetune_test_ld, ft_test_ld)
 
-            ft_val_ld = eval_student(student, head, val_dl, device)
+            ft_val_ld = eval_student(student, head, val_dl, device, split="Validation")
             stud_finetune_val_ld = update_lossdict(stud_finetune_val_ld, ft_val_ld)
 
-            ft_train_ld = eval_student(student, head, train_dl, device)
+            ft_train_ld = eval_student(student, head, train_dl, device, split="Train")
             stud_finetune_train_ld = update_lossdict(
                 stud_finetune_train_ld, ft_train_ld
             )
@@ -352,6 +378,14 @@ def train(args):
                     save_path,
                 )
                 print(f"Saved model at epoch {n}")
+
+                trained_model_artifact = wandb.Artifact(
+                    "simclr_ecg_resnet18", type="model",
+                    description="resnet18 trained on the ECG dataset using SimCLR",
+                    metadata=vars(args))
+
+                trained_model_artifact.add_dir(args.savefol)
+                wandb.run.log_artifact(trained_model_artifact)
     return (
         student,
         head,
@@ -364,4 +398,12 @@ def train(args):
 
 
 if __name__ == "__main__":
+
+    wandb.init(
+        project="meta-parameterized-pre-training",
+        entity="sauravmaheshkar",
+        job_type="train",
+        config=vars(args),
+    )
     train(args)
+    wandb.run.finish()

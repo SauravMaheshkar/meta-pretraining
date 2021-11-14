@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import roc_auc_score
 
+import wandb
+
 from .utils import get_loss, get_loss_simclr
 
 __all__ = [
@@ -209,7 +211,7 @@ def update_lossdict(lossdict: Dict, update: Dict, action: str = "append") -> Dic
 
 
 def eval_student(
-    student: nn.Module, head: nn.Module, dl: Iterable, device: torch.device
+    student: nn.Module, head: nn.Module, dl: Iterable, device: torch.device, split: str
 ) -> Dict:
 
     # Put the Student Model in Evaluation Mode
@@ -258,5 +260,8 @@ def eval_student(
             roc_list.append(np.nan)
 
     # Print Metrics
-    print("Average loss: {:.4f}, AUC: {:.4f}".format(net_loss, np.mean(roc_list)))
+    print("Average loss: {:.4f}, {}-AUC: {:.4f}".format(net_loss, split, np.mean(roc_list)))
+
+    # Sync Metrics to Weights and Biases 🔥
+    wandb.log({f"{split} AUC": np.mean(roc_list)})
     return {"epoch_loss": net_loss, "auc": roc_list}

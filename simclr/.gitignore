@@ -1,14 +1,15 @@
 # Dataset
 physionet.org
 
-# Training Logs
-simclr-500ex/
-simclr-100ex/
-simclr-ecg-eval-transfereval-250ex/
+# Checkpoints
+checkpoints/
 
 # Cache
 __pycache__/
 .mypy_cache
+
+# Weights & Biases
+wandb/
 
 # Environments
 venv/

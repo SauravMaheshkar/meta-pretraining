@@ -4,7 +4,7 @@ from typing import Callable, Literal, Tuple
 import torch
 import torch.nn as nn
 
-__all__ = ["model_saver", "get_save_path", "get_loss", "get_loss_simclr"]
+__all__ = ["model_saver",  "get_loss", "get_loss_simclr"]
 
 # ======================== Model Saver Function ======================== #
 
@@ -25,20 +25,6 @@ def model_saver(
         },
         path + f"/checkpoint_epoch{epoch}.pt",
     )
-
-
-# ======================== Save Path Function ======================== #
-
-
-def get_save_path(args) -> str:
-    modfol: str = f"""seed{args.seed}-dataset{args.dataset}-student{args.studentarch}-teacher{args.teacherarch}-ptlr{args.pretrain_lr}-ftlr{args.finetune_lr}-hyplr{args.hyper_lr}-warmup{args.warmup_epochs}-pt_steps{args.pretrain_steps}-ft_steps{args.finetune_steps}-neumann{args.neumann}"""
-    if args.teach_checkpoint:
-        args.savefol += "-teachckpt"
-        modfol = os.path.join(modfol, args.teach_checkpoint)
-    pth: str = os.path.join(args.savefol, modfol)
-    os.makedirs(pth, exist_ok=True)
-    return pth
-
 
 # ======================== Loss Function ======================== #
 
