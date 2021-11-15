@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-__all__ = ["ecg_simclr_resnet18"]
+__all__ = ["ecg_simclr_resnet18", "ecg_simclr_resnet34"]
 
 # ======================== Helper Functions ======================== #
 # Helper Functions to get 1D Convolutional Layers with,
@@ -235,6 +235,24 @@ def ecg_simclr_resnet18(
     return _resnet(
         block=BasicBlock,
         layers=[2, 2, 2, 2],
+        pretrained_model=pretrained,
+        progress=progress,
+        **kwargs
+    )
+
+def ecg_simclr_resnet34(
+    pretrained: bool = False, progress: bool = True, **kwargs
+) -> nn.Module:
+    """
+    Creates a ResNet34 PyTorch Module
+
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _resnet(
+        block=BasicBlock,
+        layers=[3, 4, 6, 3],
         pretrained_model=pretrained,
         progress=progress,
         **kwargs
