@@ -20,11 +20,12 @@ from nets.temporal_warp import RandWarpAugLearnExMag
 from nets.wrappers import MultiTaskHead
 from utils import set_seed
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 parser = argparse.ArgumentParser(description="ECG SIMCLR IFT")
 
 parser.add_argument("--seed", type=int, default=0)
-parser.add_argument("--gpu", type=int)
-
 parser.add_argument("--pretrain_lr", type=float, default=1e-4)
 parser.add_argument("--finetune_lr", type=float, default=1e-4)
 parser.add_argument("--hyper_lr", type=float, default=1e-4)
@@ -34,7 +35,7 @@ parser.add_argument("--warmup_epochs", type=int, default=1)
 parser.add_argument("--pretrain_steps", type=int, default=10)
 parser.add_argument("--finetune_steps", type=int, default=1)
 parser.add_argument("--studentarch", type=str, default="resnet18")
-parser.add_argument("--teacherarch")
+parser.add_argument("--teacherarch", type=str, default="warpexmag")
 parser.add_argument("--dataset", type=str, default="ecg")
 parser.add_argument("--neumann", type=int, default=1)
 parser.add_argument("--batch_size", type=int, default=256)
@@ -51,10 +52,6 @@ os.makedirs(args.savefol, exist_ok=True)
 
 set_seed(args.seed)
 
-# File Sharing Strategy for MultiProcessing
-torch.multiprocessing.set_sharing_strategy("file_system")
-
-os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
