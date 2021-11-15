@@ -135,13 +135,13 @@ class ECGDataSetWrapper(object):
         test_fold: int = 10
 
         # Training Data
-        X_train = X[np.where(Y.strat_fold != test_fold)]
-        y_train = Y[(Y.strat_fold != test_fold)].diagnostic_superclass
+        X_train: np.ndarray  = X[np.where(Y.strat_fold != test_fold)]
+        y_train: pd.Series = Y[(Y.strat_fold != test_fold)].diagnostic_superclass
         y_train = np.stack(y_train, axis=0)
 
         # Testing Data
-        X_test = X[np.where(Y.strat_fold == test_fold)]
-        y_test = Y[Y.strat_fold == test_fold].diagnostic_superclass
+        X_test: np.ndarray = X[np.where(Y.strat_fold == test_fold)]
+        y_test: pd.Series = Y[Y.strat_fold == test_fold].diagnostic_superclass
         y_test = np.stack(y_test, axis=0)
 
         # Data Augmentation
