@@ -1,12 +1,12 @@
 import ast
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
 
-import wandb
 import numpy as np
 import pandas as pd
 import torch
 import wfdb
 
+import wandb
 from utils import set_seed
 
 RawData = Union[List, np.ndarray]
@@ -143,7 +143,7 @@ class ECGDataSetWrapper(object):
         test_fold: int = 10
 
         # Training Data
-        X_train: np.ndarray  = X[np.where(Y.strat_fold != test_fold)]
+        X_train: np.ndarray = X[np.where(Y.strat_fold != test_fold)]
         y_train: pd.Series = Y[(Y.strat_fold != test_fold)].diagnostic_superclass
         y_train = np.stack(y_train, axis=0)
 

@@ -4,7 +4,7 @@ from typing import Callable, Literal, Tuple
 import torch
 import torch.nn as nn
 
-__all__ = ["model_saver",  "get_loss", "get_loss_simclr"]
+__all__ = ["model_saver", "get_loss", "get_loss_simclr"]
 
 # ======================== Model Saver Function ======================== #
 
@@ -25,6 +25,7 @@ def model_saver(
         },
         path + f"/checkpoint_epoch{epoch}.pt",
     )
+
 
 # ======================== Loss Function ======================== #
 

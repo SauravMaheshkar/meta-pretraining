@@ -260,7 +260,11 @@ def eval_student(
             roc_list.append(np.nan)
 
     # Print Metrics
-    print("Average-{}-loss: {:.4f}, {}-AUC: {:.4f}".format(split, net_loss,split, np.mean(roc_list)))
+    print(
+        "Average-{}-loss: {:.4f}, {}-AUC: {:.4f}".format(
+            split, net_loss, split, np.mean(roc_list)
+        )
+    )
 
     # Sync Metrics to Weights and Biases 🔥
     wandb.log({f"{split} AUC": np.mean(roc_list)})

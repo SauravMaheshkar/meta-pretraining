@@ -240,6 +240,7 @@ def ecg_simclr_resnet18(
         **kwargs
     )
 
+
 def ecg_simclr_resnet34(
     pretrained: bool = False, progress: bool = True, **kwargs
 ) -> nn.Module:

@@ -1,5 +1,8 @@
+# ======================== Imports ======================== #
+
 import argparse
 import os
+import warnings
 from typing import Any, Callable, Dict, List
 
 import higher
@@ -15,12 +18,12 @@ from engine.helpers import (do_ft_head, do_pretrain, eval_student,
 from engine.utils import model_saver
 from hyperparam_utils import gather_flat_grad, hyper_step, zero_hypergrad
 from loss import NTXentLoss
-from nets.resnet import ecg_simclr_resnet18
+from nets.resnet import ecg_simclr_resnet18, ecg_simclr_resnet34
 from nets.temporal_warp import RandWarpAugLearnExMag
 from nets.wrappers import MultiTaskHead
 from utils import set_seed
 
-import warnings
+# Ignore certain warnings for aesthetic output
 warnings.filterwarnings("ignore", category=UserWarning)
 
 parser = argparse.ArgumentParser(description="ECG SIMCLR IFT")
@@ -48,6 +51,7 @@ parser.add_argument("--teach_checkpoint", type=str)
 
 args = parser.parse_args()
 
+# Create a directory to save model checkpoints
 os.makedirs(args.savefol, exist_ok=True)
 
 set_seed(args.seed)
@@ -120,11 +124,13 @@ def train(args):
     # Initialize Student and Head
     if args.studentarch == "resnet18":
         student: nn.Module = ecg_simclr_resnet18().to(device)
-        head: nn.Module = MultiTaskHead(256, NUM_TASKS_FT).to(device)
+    elif args.studentarch == "resnet34":
+        student: nn.Module = ecg_simclr_resnet34().to(device)
     # Good Error Handling
     else:
         raise NotImplementedError
 
+    head: nn.Module = MultiTaskHead(256, NUM_TASKS_FT).to(device)
     # Initialize Optimizer's and Schedule
     pretrain_optim: torch.optim.Optimizer = torch.optim.Adam(
         student.parameters(), lr=args.pretrain_lr
@@ -377,9 +383,15 @@ def train(args):
                 print(f"Saved model at epoch {n}")
 
                 trained_model_artifact = wandb.Artifact(
-                    "simclr_ecg_resnet18", type="model",
-                    description="resnet18 trained on the ECG dataset using SimCLR",
-                    metadata=vars(args))
+                    "{}-{}-{}-{}".format(
+                        args.seed, args.warmup_epochs, args.epochs, args.ex
+                    ),
+                    type="{}".format(args.studentarch),
+                    description="A {} trained on the PTB-XL ECG dataset using SimCLR using Meta-Parameterized Pre-Training for {} warmup epochs, {} Meta FT examples with random seed {}".format(
+                        args.studentarch, args.warmup_epochs, args.ex, args.seed
+                    ),
+                    metadata=vars(args),
+                )
 
                 trained_model_artifact.add_dir(args.savefol)
                 wandb.run.log_artifact(trained_model_artifact)
@@ -398,6 +410,7 @@ if __name__ == "__main__":
 
     wandb.init(
         project="meta-parameterized-pre-training",
+        name="{}-{}-{}-{}".format(args.seed, args.warmup_epochs, args.epochs, args.ex),
         entity="sauravmaheshkar",
         job_type="train",
         config=vars(args),
