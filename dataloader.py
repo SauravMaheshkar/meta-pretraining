@@ -98,11 +98,8 @@ class ECGDataSetWrapper(object):
 
     def get_data_loaders(self, args) -> Sequence[Any]:
 
-        wandb.run.use_artifact("records100:v0", type="raw_data")
-        wandb.run.use_artifact("records500:v0", type="raw_data")
         wandb.run.use_artifact("train_labels:v0", type="train_data")
         wandb.run.use_artifact("test_labels:v0", type="train_data")
-
 
         def load_raw_data(df, sampling_rate: int, path: str) -> RawData:
             """Returns the signal descriptors of the raw waveform data"""
