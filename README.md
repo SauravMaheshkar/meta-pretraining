@@ -45,6 +45,8 @@ docker pull sauravmaheshkar/meta-pretraining
 ### Download the 💽 dataset using the provided bash file
 
 ```bash
+chmod +x download_dataset.sh
+
 ./download_dataset.sh
 ```
 
