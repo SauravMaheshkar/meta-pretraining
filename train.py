@@ -13,8 +13,13 @@ from tqdm import tqdm
 
 import wandb
 from dataloader import ECGDataSetWrapper
-from engine.helpers import (do_ft_head, do_pretrain, eval_student,
-                            inner_loop_finetune, update_lossdict)
+from engine.helpers import (
+    do_ft_head,
+    do_pretrain,
+    eval_student,
+    inner_loop_finetune,
+    update_lossdict,
+)
 from engine.utils import model_saver
 from hyperparam_utils import gather_flat_grad, hyper_step, zero_hypergrad
 from loss import NTXentLoss
@@ -416,4 +421,4 @@ if __name__ == "__main__":
         config=vars(args),
     )
     train(args)
-    wandb.run.finish()
+    wandb.run.finish()  # type: ignore
