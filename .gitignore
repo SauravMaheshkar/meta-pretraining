@@ -3,6 +3,7 @@ physionet.org
 
 # Checkpoints
 checkpoints/
+simclr-ecg-eval/
 
 # Cache
 __pycache__/
