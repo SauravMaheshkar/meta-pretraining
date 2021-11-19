@@ -6,10 +6,11 @@ import torch.nn as nn
 from torch.backends import cudnn
 from tqdm import tqdm
 
+import wandb
 from dataloader import ECGDataSetWrapper
 from engine.helpers import eval_student, update_lossdict
 from engine.utils import get_loss
-from nets.resnet import ecg_simclr_resnet18
+from nets.resnet import ecg_simclr_resnet18, ecg_simclr_resnet34
 from nets.wrappers import MultiTaskHead
 from utils import set_seed
 
@@ -22,32 +23,33 @@ parser = argparse.ArgumentParser(description="Eval SIMCLR ECG")
 
 parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--runseed", type=int, default=0)
-parser.add_argument("--gpu", type=int, default=0)
 parser.add_argument("--ex", type=int, default=500, help="num data points")
-
 parser.add_argument("--finetune_lr", type=float, default=1e-3)
 parser.add_argument("--epochs", default=200, type=int)
-parser.add_argument("--studentarch", type=str, default="resnet18")
+parser.add_argument("--warmup_epochs", type=int, default=1)
+parser.add_argument("--studentarch", type=str, default="resnet34")
+parser.add_argument("--training_epochs", type=int, default=50)
 parser.add_argument("--dataset", type=str, default="ecg")
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--savefol", type=str, default="simclr-ecg-eval")
 parser.add_argument("--transfer_eval", action="store_true")
-parser.add_argument("--checkpoint", type=str)
+parser.add_argument(
+    "--checkpoint", type=str, default="checkpoints/checkpoint_epoch49.pt"
+)
 
 args = parser.parse_args()
 
 set_seed(args.seed)
 
-torch.multiprocessing.set_sharing_strategy("file_system")
+# Create a directory to save model checkpoints
+os.makedirs(args.savefol, exist_ok=True)
 
-
-os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 if args.transfer_eval:
-    args.savefol += f"-transfereval-{args.ex}ex"
+    args.savefol += f"/transfereval-{args.ex}ex"
 else:
-    args.savefol += f"-lineval-{args.ex}ex"
+    args.savefol += f"/lineval-{args.ex}ex"
 
 
 class AverageMeter(object):
@@ -67,13 +69,6 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-
-
-def get_save_path_eval(args) -> str:
-    modfol: str = f"""seed{args.seed}-runseed{args.runseed}-student{args.studentarch}-ftlr{args.finetune_lr}-epochs{args.epochs}-ckpt{args.checkpoint}"""
-    pth: str = os.path.join(args.savefol, modfol)
-    os.makedirs(pth, exist_ok=True)
-    return pth
 
 
 def do_train_step(
@@ -108,6 +103,19 @@ def do_train_step(
 
 def train(args):
 
+    weights = wandb.run.use_artifact(
+        "sauravmaheshkar/meta-parameterized-pre-training/{}-{}-{}-{}:latest".format(
+            args.seed, args.warmup_epochs, args.training_epochs, args.ex
+        ),
+        type="{}".format(args.studentarch),
+    )
+
+    model_dir = weights.download(root="weights", recursive=True)
+
+    args.checkpoint = model_dir + "/checkpoint_epoch{}.pt".format(
+        (args.training_epochs - 1)
+    )
+
     # Initialize Meters
     ft_loss_meter = AverageMeter()
     ft_acc_meter = AverageMeter()
@@ -116,13 +124,16 @@ def train(args):
     DSHandle: Callable = ECGDataSetWrapper(args.batch_size)
     _, train_dl, val_dl, test_dl, _, NUM_TASKS_FT = DSHandle.get_data_loaders(args)
 
-    # Create Student and Head Networks
+    # Initialize Student and Head
     if args.studentarch == "resnet18":
         student: nn.Module = ecg_simclr_resnet18().to(device)
-        head: nn.Module = MultiTaskHead(256, NUM_TASKS_FT).to(device)
+    elif args.studentarch == "resnet34":
+        student: nn.Module = ecg_simclr_resnet34().to(device)
+    # Good Error Handling
     else:
-        # Currently only ResNet18 is supported
         raise NotImplementedError
+
+    head: nn.Module = MultiTaskHead(256, NUM_TASKS_FT).to(device)
 
     # Handle checkpointing
     if args.checkpoint is None:
@@ -164,6 +175,13 @@ def train(args):
             ft_loss_meter.update(ft_train_loss)
             ft_acc_meter.update(ft_train_acc)
 
+            # Sync Metrics to Weights and Biases 🔥
+            wandb.log(
+                {
+                    "FineTuning Training Loss": ft_train_loss,
+                }
+            )
+
             # Update the progress bar
             progress_bar.set_postfix(
                 finetune_train_loss="%.4f" % ft_loss_meter.avg,
@@ -175,13 +193,19 @@ def train(args):
             stud_finetune_train_ld["acc"].append(ft_train_acc)
 
         # Evaluate Student
-        ft_test_ld = eval_student(student, head, test_dl, device)
+        ft_test_ld = eval_student(
+            student, head, test_dl, device, split="Evaluation-Test"
+        )
         stud_finetune_test_ld = update_lossdict(stud_finetune_test_ld, ft_test_ld)
 
-        ft_val_ld = eval_student(student, head, val_dl, device)
+        ft_val_ld = eval_student(
+            student, head, val_dl, device, split="Evaluation-Validation"
+        )
         stud_finetune_val_ld = update_lossdict(stud_finetune_val_ld, ft_val_ld)
 
-        ft_train_ld = eval_student(student, head, train_dl, device)
+        ft_train_ld = eval_student(
+            student, head, train_dl, device, split="Evaluation-Train"
+        )
         stud_finetune_train_ld = update_lossdict(stud_finetune_train_ld, ft_train_ld)
 
         # Save the logs
@@ -190,14 +214,34 @@ def train(args):
             "finetune_val_ld": stud_finetune_val_ld,
             "finetune_test_ld": stud_finetune_test_ld,
         }
-        torch.save(tosave, os.path.join(get_save_path_eval(args), "eval_logs.ckpt"))
+        torch.save(tosave, os.path.join(args.savefol, "eval_logs.ckpt"))
 
         # Reset the Meters
         ft_loss_meter.reset()
         ft_acc_meter.reset()
 
+    evaluation_model_artifact = wandb.Artifact(
+        "eval-{}-{}-{}-{}".format(args.seed, args.runseed, args.epochs, args.ex),
+        type="Eval-{}".format(args.studentarch),
+        description="A finetuned {} evaluated on the PTB-XL ECG dataset which was trained using SimCLR with Meta-Parameterized Pre-Training with {} Meta FT examples and random seed {}".format(
+            args.studentarch, args.ex, args.seed
+        ),
+        metadata=vars(args),
+    )
+
+    evaluation_model_artifact.add_dir(args.savefol)
+    wandb.run.log_artifact(evaluation_model_artifact)
+
     return student, head, finetune_optim
 
 
 if __name__ == "__main__":
+    wandb.init(
+        project="meta-parameterized-pre-training",
+        name="eval-{}-{}-{}-{}".format(args.seed, args.runseed, args.epochs, args.ex),
+        entity="sauravmaheshkar",
+        job_type="eval",
+        config=vars(args),
+    )
     train(args)
+    wandb.run.finish()  # type: ignore
