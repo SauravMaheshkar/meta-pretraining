@@ -9,7 +9,7 @@ This repository contains the code to reproduce the SimCLR experiments discussed 
 @inproceedings{
     raghu2021metalearning,
     title={Meta-learning to Improve Pre-training},
-    author={Aniruddh Raghu and Jonathan Peter Lorraine and Simon        Kornblith and Matthew B.A. McDermott and David Duvenaud},
+    author={Aniruddh Raghu and Jonathan Peter Lorraine and Simon Kornblith and Matthew B.A. McDermott and David Duvenaud},
     booktitle={Thirty-Fifth Conference on Neural Information Processing Systems},
     year={2021},
     url={https://openreview.net/forum?id=Wiq6Mg8btwT}
