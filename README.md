@@ -1,6 +1,6 @@
 # [Meta-learning to Improve Pre-training, NeurIPS 2021 Poster](https://openreview.net/forum?id=Wiq6Mg8btwT)
 
-This repository contains the code to reproduce the SimCLR experiments discussed in the paper and is a fork of the [original repository](https://github.com/aniruddhraghu/meta-pretraining) instrumented using [Weights and Biases](https://wandb.ai/site).
+This repository contains the code to reproduce the SimCLR experiments discussed in the paper and is a fork of the [original repository](https://github.com/aniruddhraghu/meta-pretraining) and is instrumented using [Weights and Biases](https://wandb.ai/site).
 
 
 # Citation
@@ -19,14 +19,31 @@ This repository contains the code to reproduce the SimCLR experiments discussed 
 # 📝 Instruction
 ## 🏠 Setting up the environment
 
-1. Create and activate a Python virtual environment
+### 🐍 Create and activate a Python virtual environment
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
-2. Download the dataset using the provided bash file
+You can also use the provided 🐳 docker container using
+```bash
+docker pull ghcr.io/sauravmaheshkar/resmlp-dev:latest
+
+docker run -it -d --name <container_name> ghcr.io/sauravmaheshkar/resmlp-dev
+```
+
+Use the [Remote Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) Extension in VSCode and [attach to the running container](https://code.visualstudio.com/docs/remote/attach-container). The code resides in the `code/` dir.
+
+Alternatively you can also download the image from [Docker Hub](https://hub.docker.com/r/sauravmaheshkar/meta-pretraining).
+
+```bash
+docker pull sauravmaheshkar/meta-pretraining
+```
+
+### Download the 💽 dataset using the provided bash file
+
 ```bash
 ./download_dataset.sh
 ```
@@ -35,10 +52,14 @@ Now let's run some experiments 😁😁😁😁.
 
 ## 💪🏻 PreTraining + FineTuning | PT + FT
 
-To train a SimCLR model with default augmentations (doesn't train the augmentations)
+To train a SimCLR model with default augmentations (doesn't train the augmentations). This will create a Weights and Biases Project titled **"meta-parameterized-pre-training"** and log our metrics, and model weights there. If you live under a rock and don't have a Weights & Biases account, [go ahead and create one now](https://app.wandb.ai/login?signup=true) !!.
 
 ```bash
-python3 train.py --warmup_epochs 100 --epochs 50 --teacherarch warpexmag --studentarch resnet34 --seed <SEED>
+python3 train.py --warmup_epochs 100 \
+                 --epochs 50 \
+                 --teacherarch warpexmag \
+                 --studentarch resnet34 \
+                 --seed <SEED>
 ```
 
 **NOTE:** The warmup epochs being greater than the number of epochs means the augmentations are not optimized.
@@ -48,7 +69,11 @@ python3 train.py --warmup_epochs 100 --epochs 50 --teacherarch warpexmag --stude
 To train a SimCLR model and optimize augmentations, with `N` MetaFT examples, run:
 
 ```bash
-python3 train.py --warmup_epochs 1 --epochs 50 --teacherarch warpexmag --seed SEED --ex N
+python3 train.py --warmup_epochs 1 \
+                 --epochs 50 \
+                 --teacherarch warpexmag \
+                 --seed SEED \ 
+                 --ex N
 ```
 
 ## 📈 Evaluation
@@ -56,7 +81,11 @@ python3 train.py --warmup_epochs 1 --epochs 50 --teacherarch warpexmag --seed SE
 To fine-tune a pre-trained model on `NFT` fine-tuning examples (FT dataset has `N` data points), with FT seed `<RUNSEED>` and dataset seed (i.e., PT seed) `<SEED>`. For the partial FT access setting,  `NFT` is more than `N` from the PT :
 
 ```bash
-python3 eval.py --training_epochs 50 --transfer_eval --runseed RUNSEED --seed SEED --ex NFT
+python3 eval.py --training_epochs 50 \
+                --transfer_eval \
+                --runseed RUNSEED \
+                --seed SEED \
+                --ex NFT
 ```
 
 **NOTE:** Before running eval.py make sure to create a `simclr-ecg-eval/transfereval-{NFT}ex` to store the evaluation logs.
