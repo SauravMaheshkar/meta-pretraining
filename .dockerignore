@@ -1,0 +1,16 @@
+# Dataset
+physionet.org
+
+# Checkpoints
+checkpoints/
+simclr-ecg-eval/
+
+# Cache
+__pycache__/
+.mypy_cache
+
+# Weights & Biases
+wandb/
+
+# Environments
+venv/
