@@ -96,7 +96,7 @@ python3 eval.py --training_epochs 50 \
 
 ## 🧑🏼‍💻 + 👨🏻‍⚖️ Code License
 
-The original repository was licensed with Apache License, Version 2.0, and therfore as extension this codebase and model weights as Weights & Biases Artifacts are also released under the same license 
+The original repository was licensed with Apache License, Version 2.0, and therefore as extension this codebase and model weights as Weights & Biases Artifacts are also released under the same license 
 
 ## 💽 + 👨🏻‍⚖️ Dataset License
 
