@@ -1,39 +1,66 @@
-# using ubuntu LTS version
-FROM ubuntu:20.04 AS builder-image
+# Use an Ubuntu image
+FROM ubuntu:impish-20220105 AS builder
 
-# avoid stuck build due to user prompt
+# metainformation
+LABEL version="0.0.1"
+LABEL maintainer="Saurav Maheshkar"
+
+# Helpers
 ARG DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install --no-install-recommends -y git python3.9 python3.9-dev python3.9-venv python3-pip python3-wheel build-essential && \
-	apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# create and activate virtual environment
-# using final folder name to avoid path issues with packages
-RUN python3.9 -m venv /home/myuser/venv
-ENV PATH="/home/myuser/venv/bin:$PATH"
-
-# install requirements
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir wheel
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-FROM ubuntu:20.04 AS runner-image
-RUN apt-get update && apt-get install --no-install-recommends -y python3.9 python3-venv && \
-	apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN useradd --create-home myuser
-COPY --from=builder-image /home/myuser/venv /home/myuser/venv
-
-USER myuser
-RUN mkdir /home/myuser/code
-WORKDIR /home/myuser/code
-COPY . .
-
-EXPOSE 5000
-
-# make sure all messages always reach console
 ENV PYTHONUNBUFFERED=1
 
-# activate virtual environment
-ENV VIRTUAL_ENV=/home/myuser/venv
-ENV PATH="/home/myuser/venv/bin:$PATH"
+# Essential Installs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		build-essential \
+		gcc \
+		gfortran \
+		libopenblas-dev \
+		python3 \
+		python3-pip \
+		python3-dev \
+		python3-venv \
+		&& apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel isort
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+RUN find /opt/venv/lib/ -follow -type f -name '*.a' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.pyc' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.txt' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.mc' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.js.map' -delete \
+    && find /opt/venv/lib/ -name '*.c' -delete \
+    && find /opt/venv/lib/ -name '*.pxd' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.md' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.png' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.jpg' -delete \
+    && find /opt/venv/lib/ -follow -type f -name '*.jpeg' -delete \
+    && find /opt/venv/lib/ -name '*.pyd' -delete \
+    && find /opt/venv/lib/ -name '__pycache__' | xargs rm -r
+
+# Runner Image
+FROM ubuntu:impish-20220105 AS runner
+
+# Helpers
+ARG DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+RUN apt update && apt install -y --no-install-recommends \ 
+		python3 \
+		python3-pip \
+		python3-dev \
+		python3-venv \
+		&& apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+COPY . .
+
+RUN useradd --create-home user
+WORKDIR /home/user
+USER user
+
+ENTRYPOINT ["/bin/bash"]
