@@ -9,6 +9,6 @@ pytest==7.0.1
 scikit-learn==1.0.2
 torch==1.10.0
 torchvision==0.11.1
-tqdm==4.62.3
+tqdm==4.63.0
 wandb==0.12.10
 wfdb==3.4.1
