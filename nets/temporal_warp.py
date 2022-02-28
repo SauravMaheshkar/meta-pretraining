@@ -103,7 +103,7 @@ class VecInt(nn.Module):
         assert nsteps >= 0, "nsteps should be >= 0, found: %d" % nsteps
 
         self.nsteps = nsteps
-        self.scale: float = 1.0 / (2 ** self.nsteps)
+        self.scale: float = 1.0 / (2**self.nsteps)
         self.transformer: nn.Module = SpatialTransformer(inshape)
 
     def forward(self, vec: torch.Tensor) -> torch.Tensor:
@@ -229,7 +229,7 @@ class RandWarpAugLearnExMag(nn.Module):
         x: torch.Tensor = source
         fm: torch.Tensor = 2 * torch.sigmoid(self.flow_mag_layer(self.net(x)))
 
-        fm_std: torch.Tensor = 100 * (self.flow_mag ** 2)
+        fm_std: torch.Tensor = 100 * (self.flow_mag**2)
 
         flow_field: torch.Tensor = (
             fm.view(BS, 1, 1)
