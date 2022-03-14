@@ -2,7 +2,7 @@ black==22.1.0
 flake8==4.0.1
 higher==0.2.1
 isort==5.10.1
-mypy==0.931
+mypy==0.940
 numpy==1.22.3
 pandas==1.4.1
 pytest==7.0.1
