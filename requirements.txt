@@ -4,7 +4,7 @@ higher==0.2.1
 isort==5.10.1
 mypy==0.942
 numpy==1.22.3
-pandas==1.4.1
+pandas==1.4.2
 pytest==7.1.1
 scikit-learn==1.0.2
 torch==1.11.0
