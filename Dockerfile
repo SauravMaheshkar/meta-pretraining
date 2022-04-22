@@ -1,5 +1,5 @@
 # Use an Ubuntu image
-FROM ubuntu:impish-20220404 AS builder
+FROM ubuntu:impish-20220415 AS builder
 
 # metainformation
 LABEL version="0.0.1"
@@ -42,7 +42,7 @@ RUN find /opt/venv/lib/ -follow -type f -name '*.a' -delete \
     && find /opt/venv/lib/ -name '__pycache__' | xargs rm -r
 
 # Runner Image
-FROM ubuntu:impish-20220404 AS runner
+FROM ubuntu:impish-20220415 AS runner
 
 # Helpers
 ARG DEBIAN_FRONTEND=noninteractive
