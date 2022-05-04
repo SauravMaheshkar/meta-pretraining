@@ -10,5 +10,5 @@ scikit-learn==1.0.2
 torch==1.11.0
 torchvision==0.12.0
 tqdm==4.64.0
-wandb==0.12.15
+wandb==0.12.16
 wfdb==3.4.1
