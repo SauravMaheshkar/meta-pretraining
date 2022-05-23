@@ -3,7 +3,7 @@ flake8==4.0.1
 higher==0.2.1
 isort==5.10.1
 mypy==0.942
-numpy==1.22.3
+numpy==1.22.4
 pandas==1.4.2
 pytest==7.1.2
 scikit-learn==1.1.1
