@@ -7,8 +7,8 @@ numpy==1.23.1
 pandas==1.4.3
 pytest==7.1.2
 scikit-learn==1.1.2
-torch==1.12.0
-torchvision==0.13.0
+torch==1.12.1
+torchvision==0.13.1
 tqdm==4.64.0
 wandb==0.13.1
 wfdb==4.0.0
